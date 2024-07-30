@@ -7,12 +7,14 @@ project ("GetLuckyNum")
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_definitions(-DGLOG_NO_ABBREVIATED_SEVERITIES -DWIN32_LEAN_AND_MEAN)
-
 
 find_package(libhv CONFIG REQUIRED)
+find_package(unofficial-mysql-connector-cpp CONFIG REQUIRED)
+find_package(spdlog CONFIG REQUIRED)
 
 add_executable(${PROJECT_NAME} "src/main.cpp" "src/Core.h" "src/Core.cpp"   "src/Util.h" "src/Util.cpp")
 
+target_link_libraries(${PROJECT_NAME} PRIVATE spdlog::spdlog_header_only)
+target_link_libraries(${PROJECT_NAME} PRIVATE unofficial::mysql-connector-cpp::connector)
 target_link_libraries(${PROJECT_NAME} PRIVATE hv)
 

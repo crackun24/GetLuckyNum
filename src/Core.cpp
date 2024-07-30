@@ -1,26 +1,26 @@
-#include "Core.h"
+ï»¿#include "Core.h"
 
-string Core::GetCom(int num)
+wstring Core::GetCom(int num)
 {
 	if (num <= 10)
-		return "·ÇÇõ";
+		return L"éé…‹";
 	else if (num > 10 && num <= 20)
-		return "ÓĞµã°×µÄ·ÇÇõ";
+		return L"æœ‰ç‚¹ç™½çš„éé…‹";
 	else if (num > 20 && num <= 50)
-		return "ÖĞµÈ";
+		return L"ä¸­ç­‰";
 	else if (num > 50 && num <= 60)
-		return "ÖĞµÈÆ«ÉÏ";
+		return L"ä¸­ç­‰åä¸Š";
 	else if (num > 60 && num <= 99)
-		return "Å·»Ê";
+		return L"æ¬§çš‡";
 	else if (num == 100)
-		return "¼«Æ·Å·»Ê";
+		return L"æå“æ¬§çš‡";
 }
 
 void Core::onMessageRec(const string& msg)
 {
 	try
 	{
-		ParseMsg(msg);
+		ParseMsg(msg); //è§£ææ•°æ®
 	}
 	catch (const exception& e)
 	{
@@ -34,20 +34,20 @@ void Core::DeleteOutDateThread()
 	{
 		try
 		{
-			chrono::system_clock::time_point now = chrono::system_clock::now(); //»ñÈ¡µ±Ç°Ê±¼ä
-			time_t time = chrono::system_clock::to_time_t(now); //×ª»»Ê±¼ä
-			struct tm* t = localtime(&time); //×ª»»Îªµ±µØÊ±¼ä
+			chrono::system_clock::time_point now = chrono::system_clock::now(); //è·å–å½“å‰æ—¶é—´
+			time_t time = chrono::system_clock::to_time_t(now); //è½¬æ¢æ—¶é—´
+			struct tm* t = localtime(&time); //è½¬æ¢ä¸ºå½“åœ°æ—¶é—´
 			t->tm_hour = 0;
 			t->tm_min = 0;
 			t->tm_sec = 0;
 			t->tm_mday += 1;
 
-			auto nextDay = chrono::system_clock::from_time_t(mktime(t)); //×ª»»Ê±¼ä
-			auto duration = nextDay - chrono::system_clock::now(); //¼ÆËãÏß³ÌÒªĞİÃßµÄÊ±¼ä
+			auto nextDay = chrono::system_clock::from_time_t(mktime(t)); //è½¬æ¢æ—¶é—´
+			auto duration = nextDay - chrono::system_clock::now(); //è®¡ç®—çº¿ç¨‹è¦ä¼‘çœ çš„æ—¶é—´
 
-			this_thread::sleep_for(duration); //Ë¯Ãßµ½´ÎÈÕµÄÁè³¿
+			this_thread::sleep_for(duration); //ç¡çœ åˆ°æ¬¡æ—¥çš„å‡Œæ™¨
 			lock_guard<shared_mutex> lg(this->mLocker);
-			this->mLuckNumMap.clear(); //Çå¿Õ±í
+			this->mLuckNumMap.clear(); //æ¸…ç©ºè¡¨
 		}
 		catch (const exception& e)
 		{
@@ -70,17 +70,22 @@ void Core::ParseMsg(const string& msg)
 {
 	try
 	{
+		LOGGER->info("Received message: {}", msg);//FIXME
 		json root = json::parse(msg);
 		auto data = root["data"];
 
 		if (data.contains("session"))
-			this->mData.Session(data["session"]);
-		else if (data["type"] == "GroupMessage") //ÅĞ¶ÏÎªÈº×éĞÅÏ¢
 		{
+			this->mData.Session(data["session"]);
+		}
+		else if (data["type"] == "GroupMessage") //åˆ¤æ–­ä¸ºç¾¤ç»„ä¿¡æ¯
+		{
+			LOGGER->info("test");
+
 			string msg;
-			for (auto& temp : data["messageChain"]) //½âÎöÊı¾İÁ´µÄĞÅÏ¢
+			for (auto& temp : data["messageChain"]) //è§£ææ•°æ®é“¾çš„ä¿¡æ¯
 			{
-				if (temp.contains("text")) //ÅĞ¶Ï°üº¬ĞÅÏ¢
+				if (temp.contains("text")) //åˆ¤æ–­åŒ…å«ä¿¡æ¯
 				{
 					msg = temp["text"];
 				}
@@ -88,27 +93,33 @@ void Core::ParseMsg(const string& msg)
 			long long senderId = data["sender"]["id"];
 			long long groupId = data["sender"]["group"]["id"];
 
-			if (msg == GbkToUtf8("ĞÒÔËÖ¸Êı"))
+			LOGGER->info(msg);//BUG
+			wcout<<Util::StringToWstring(msg)<<endl;//FIXME
+			wcout << flush;//FIXME
+
+			if (msg == Util::WstringToString(L"æµ‹è¯•")) //BUG 
 			{
-				srand(time(NULL)); //³õÊ¼»¯Ëæ»úÊıÖÖ×Ó
-				stringstream ss;
-				ss << "Äú½ñÈÕµÄĞÒÔËÖ¸ÊıÎª: ";
+				srand(time(NULL)); //åˆå§‹åŒ–éšæœºæ•°ç§å­
+				wstringstream ss;
+				ss << L"æ‚¨ä»Šæ—¥çš„å¹¸è¿æŒ‡æ•°ä¸º: ";
+
 				int num;
 				shared_lock<shared_mutex> lg(this->mLocker);
-				if (this->mLuckNumMap.find(senderId) != this->mLuckNumMap.end()) //ÅĞ¶ÏÊÇ·ñÒÑ¾­»ñÈ¡¹ıÁË
+				if (this->mLuckNumMap.find(senderId) != this->mLuckNumMap.end()) //åˆ¤æ–­æ˜¯å¦å·²ç»è·å–è¿‡äº†
 				{
 					num = this->mLuckNumMap[senderId];
 				}
 				else
 				{
-					//Ã»ÓĞ»ñÈ¡¹ı
-					srand(time(NULL)); //³õÊ¼»¯Ëæ»úÊıÖÖ×Ó
-					int randNum = rand() % 101; //»ñÈ¡Ëæ»úÊı
-					this->mLuckNumMap.insert(make_pair(senderId, randNum)); //²åÈëËæ»úÊı
+					//æ²¡æœ‰è·å–è¿‡
+					srand(time(NULL)); //åˆå§‹åŒ–éšæœºæ•°ç§å­
+					int randNum = rand() % 101; //è·å–éšæœºæ•°
+					this->mLuckNumMap.insert(make_pair(senderId, randNum)); //æ’å…¥éšæœºæ•°
 					num = randNum;
 				}
-				ss << to_string(num) << "," << GetCom(num);
-				SendGroupMsg(groupId, GbkToUtf8(ss.str().c_str()));
+				ss << to_wstring(num) << L"," << GetCom(num);
+
+				SendGroupMsg(groupId, Util::WstringToString(ss.str().c_str()));
 			}
 		}
 	}
@@ -124,60 +135,30 @@ void Core::RunService()
 	{
 		auto res = async(launch::async, &Core::DeleteOutDateThread, this);
 
-		libProp::Config conf = libProp::Config::Parse("./config.properties"); //½âÎöÅäÖÃÎÄ¼şĞÅÏ¢
+
+		boost::property_tree::ptree pt;
+		boost::property_tree::ini_parser::read_ini("./config.properties", pt); //è§£æé…ç½®æ–‡ä»¶ä¿¡æ¯
 
 		wss.onmessage = bind(&Core::onMessageRec, this, placeholders::_1);
 		wss.onopen = bind(&Core::onOpen, this);
 		wss.onclose = bind(&Core::onClose, this);
 
 		reconn_setting_s rec;
-		rec.cur_delay = 2000; //¶Ï¿ªÁ¬½Óºó2sÖØĞÂÁ¬½Ó
-		wss.reconn_setting = &rec; //ÉèÖÃÖØĞÂÁ¬½ÓµÄ¶ÔÏó
-		wss.open(conf["miraiUrl"].as<string>().c_str()); //¿ªÆôÁ¬½Ó
+		rec.cur_delay = 2000; //æ–­å¼€è¿æ¥å2sé‡æ–°è¿æ¥
+		wss.reconn_setting = &rec; //è®¾ç½®é‡æ–°è¿æ¥çš„å¯¹è±¡
+		wss.open(pt.get<string>("miraiUrl").c_str()); //å¼€å¯è¿æ¥
 
 		getchar();
 	}
 	catch (const exception& e)
 	{
 		LOGGER->info("An error occured when running the service,error msg:{},exiting.", e.what());
-		terminate(); //½áÊø³ÌĞò
+		terminate(); //ç»“æŸç¨‹åº
 	}
 }
 
 Core::Core(): LOGGER(spdlog::get("GetLuckyNum"))
 {
-}
-
-string Core::GbkToUtf8(const char* src_str)
-{
-	int len = MultiByteToWideChar(CP_ACP, 0, src_str, -1, NULL, 0);
-	wchar_t* wstr = new wchar_t[len + 1];
-	memset(wstr, 0, len + 1);
-	MultiByteToWideChar(CP_ACP, 0, src_str, -1, wstr, len);
-	len = WideCharToMultiByte(CP_UTF8, 0, wstr, -1, NULL, 0, NULL, NULL);
-	char* str = new char[len + 1];
-	memset(str, 0, len + 1);
-	WideCharToMultiByte(CP_UTF8, 0, wstr, -1, str, len, NULL, NULL);
-	string strTemp = str;
-	if (wstr) delete[] wstr;
-	if (str) delete[] str;
-	return strTemp;
-}
-
-string Core::Utf8ToGbk(const char* src_str)
-{
-	int len = MultiByteToWideChar(CP_UTF8, 0, src_str, -1, NULL, 0);
-	wchar_t* wszGBK = new wchar_t[len + 1];
-	memset(wszGBK, 0, len * 2 + 2);
-	MultiByteToWideChar(CP_UTF8, 0, src_str, -1, wszGBK, len);
-	len = WideCharToMultiByte(CP_ACP, 0, wszGBK, -1, NULL, 0, NULL, NULL);
-	char* szGBK = new char[len + 1];
-	memset(szGBK, 0, len + 1);
-	WideCharToMultiByte(CP_ACP, 0, wszGBK, -1, szGBK, len, NULL, NULL);
-	string strTemp(szGBK);
-	if (wszGBK) delete[] wszGBK;
-	if (szGBK) delete[] szGBK;
-	return strTemp;
 }
 
 void Core::SendGroupMsg(long long targetGroup, string text)
@@ -192,7 +173,7 @@ void Core::SendGroupMsg(long long targetGroup, string text)
 	root["content"]["target"] = targetGroup;
 	root["content"]["messageChain"].push_back(msg);
 	wss.send(root.dump());
-} //·¢ËÍÈº×éÏûÏ¢
+} //å‘é€ç¾¤ç»„æ¶ˆæ¯
 
 void ProtectData::Session(string token)
 {

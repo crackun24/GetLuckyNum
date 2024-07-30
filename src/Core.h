@@ -2,6 +2,8 @@
 #define CORE_H
 
 #include <chrono>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/ini_parser.hpp>
 #include <future>
 #include <nlohmann/json.hpp>
 #include <hv/WebSocketClient.h>
@@ -10,6 +12,7 @@
 #include <spdlog/logger.h>
 #include <spdlog/spdlog.h>
 #include <random>
+#include "Util.h"
 
 using namespace nlohmann;
 using namespace spdlog;
@@ -32,14 +35,12 @@ private:
 	shared_ptr<logger>LOGGER;
 
 	hv::WebSocketClient wss;
-	string GetCom(int num);//根据指数获取评价
+	wstring GetCom(int num);//根据指数获取评价
 	void onMessageRec(const string& msg);//接收消息的回调函数
 	void DeleteOutDateThread();//删除已经超时的数字的线程
 	void onClose();//断开连接时执行的回调函数
 	void onOpen();//连接成功执行的回调函数
 	void ParseMsg(const string& msg);//解析数据的信息
-	string GbkToUtf8(const char* src_str);
-	string Utf8ToGbk(const char* src_str);
 	void SendGroupMsg(long long targetGroup, string text);
 
 public:

@@ -1,13 +1,15 @@
 #include "Util.h"
 
-string Util::WstringToWstring(const wstring& str)
+string Util::WstringToString(const wstring& str)
 {
-	return string(str.begin(), str.end());
+	std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
+	return converter.to_bytes(str);
 }
 
 wstring Util::StringToWstring(const string& str)
 {
-	return wstring(str.begin(), str.end());
+	std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
+	return converter.from_bytes(str);
 }
 
 wstring Util::GetCom(int num)
@@ -25,4 +27,3 @@ wstring Util::GetCom(int num)
 	else if (num == 100)
 		return L"¼«Æ·Å·»Ê";
 }
-
