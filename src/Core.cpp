@@ -148,6 +148,9 @@ void Core::RunService()
 		wss.reconn_setting = &rec; //设置重新连接的对象
 		wss.open(pt.get<string>("miraiUrl").c_str()); //开启连接
 
+		mImgGenerator = ImgGenerator::getInstance(); //获取图片生成器的实例
+		mImgGenerator->generateImg("test",0,32,64);//TODO TEST
+
 		getchar();
 	}
 	catch (const exception& e)
